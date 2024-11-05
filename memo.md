@@ -160,3 +160,111 @@ fn main() {
 参考になりそうなサイト
 - [Rustのライフタイムについて知りたい](https://qiita.com/toreis/items/970bcfed6a930e3c84dc)
 
+# 4章
+構造体にリファレンスを持たせる場合、ライフタイムを指定する必要がある。
+```rust
+#[derive(Debug)]
+struct Person {
+    name: String, 
+    age: u8, 
+}
+
+#[derive(Debug)]
+struct Parents<'a, 'b> {
+    father: &'a Person, 
+    mother: &'b Person, 
+}
+impl<'a, 'b> Parents<'a, 'b> {
+    fn new(father: &'a Person, mother: &'b Person) -> Parents<'a, 'b> {
+        Parents{father, mother}
+    }
+}
+
+fn main() {
+    let taro = Person{
+        name: String::from("taro"), 
+        age: 50, 
+    };
+    let hanako = Person{
+        name: String::from("hanako"), 
+        age: 48, 
+    };
+
+    let sato = Parents::new(&taro, &hanako);
+    println!("{:?}", sato);
+}
+```
+
+列挙型は取りうる値が全て列挙されたもので、matchと相性が良い。
+```rust
+enum Sign {
+    Positive, 
+    Zero, 
+    Negative, 
+}
+
+use std::cmp::Ordering;
+fn determine_sign(x: i32) -> Sign {
+    match x.cmp(&0) {
+        Ordering::Greater => Sign::Positive, 
+        Ordering::Less => Sign::Negative, 
+        Ordering::Equal => Sign::Zero, 
+    }
+}
+
+fn print_sign(s: Sign) {
+    match s {
+        Sign::Positive => println!("+"), 
+        Sign::Zero => println!("0"), 
+        Sign::Negative => println!("-"), 
+    }
+}
+
+fn main() {
+    print_sign(determine_sign(1));
+    print_sign(determine_sign(-2));
+    print_sign(determine_sign(0));
+}
+```
+
+タプルや構造体などの複数の値を持つ型を列挙型にすることもできる。
+```rust
+enum EnumExample {
+    TupleTypeExample1(String),
+    TupleTypeExample2(i32, bool),
+    StructTypeExample{name: String, age: u8},
+}
+
+fn main() {
+    let mut v: Vec<EnumExample> = Vec::new();
+
+    v.push(EnumExample::TupleTypeExample1(String::from("Hello")));
+    v.push(EnumExample::TupleTypeExample2(10, true));
+    v.push(
+        EnumExample::StructTypeExample{
+            name: String::from("taro"),
+            age: 10,
+        }
+    );
+
+    for e in &v {
+        if let EnumExample::StructTypeExample{name: n, age: a} = e {
+            println!("StructTypeExample_iflet: name = {}, age = {}", n, a);
+        }
+    }
+
+    for e in &v {
+        match e {
+            EnumExample::TupleTypeExample1(s) => {
+                println!("TupleTypeExample1: s = {}", s);
+            }
+            EnumExample::TupleTypeExample2(n, b) => {
+                println!("TupleTypeExample1: n = {}, b = {}", n, b);
+            }
+            EnumExample::StructTypeExample{name: n, ..} => {
+                println!("StructTypeExample: name = {}", n);
+            }
+        }
+    }
+}
+```
